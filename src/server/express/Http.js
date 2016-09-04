@@ -3,12 +3,12 @@ import { Observable } from 'rxjs/Observable';
 
 export default class Http {
 
-    constructor( ) {
+    constructor ( ) {
         this.routes = [];
         this.midwares = [];
     }
 
-    addMidware( midware ) {
+    addMidware ( midware ) {
         try {
             if ( typeof midware !== 'function' ) {
                 throw "TypeError: Http addMidware";
@@ -20,7 +20,7 @@ export default class Http {
         }
     }
 
-    addRoute( route, cb, method ) {
+    addRoute ( route, cb, method ) {
         try {
             if ( typeof arguments[0] !== 'string' || typeof arguments[1] !== 'function') {
                 console.log(`TypeError: Http _addRoute`);
@@ -37,7 +37,7 @@ export default class Http {
         }
     }
 
-    listen( domain, port ) {
+    listen ( domain, port ) {
         try{
             http.createServer((req, res) => {
                 // 1. run the midwares
@@ -53,7 +53,7 @@ export default class Http {
             }).listen( Number(port), domain );
             console.log(`server is listening in ${domain}: ${port}`);
 
-        }catch(e) {
+        } catch (e) {
             console.log(`create server error`);console.log(e);
         }
     }

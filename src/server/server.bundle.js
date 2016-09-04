@@ -56,13 +56,21 @@
 	app.listen('127.0.0.1', '80');
 
 	app.get('/', function (req, res) {
-	    console.log('i am in /');
 	    console.log(req.user);
 	    res.end('hello world');
 	});
 
+	app.get('/cat', function (req, res) {
+	    console.log('cat');
+	    res.end('cat');
+	});
+
 	app.use(function (req, res) {
 	    req.user = 'hzp';
+	});
+
+	app.node('../static/sayhello.js', 1, function (err, stdout, stderr) {
+	    console.log(stdout);
 	});
 
 /***/ },
@@ -87,6 +95,10 @@
 
 	var _Http2 = _interopRequireDefault(_Http);
 
+	var _Child_process = __webpack_require__(39);
+
+	var _Child_process2 = _interopRequireDefault(_Child_process);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var express = void 0;
@@ -100,6 +112,7 @@
 	        (0, _classCallCheck3.default)(this, App);
 
 	        this._http = new _Http2.default();
+	        this.child_process = new _Child_process2.default();
 	    }
 
 	    (0, _createClass3.default)(App, [{
@@ -122,6 +135,11 @@
 	        key: 'use',
 	        value: function use(midware) {
 	            this._http.addMidware(midware);
+	        }
+	    }, {
+	        key: 'node',
+	        value: function node(filename, args, cb) {
+	            this.child_process.exec.apply(this.child_process, arguments);
 	        }
 	    }]);
 	    return App;
@@ -1301,6 +1319,62 @@
 	exports.getSymbolObservable = getSymbolObservable;
 	exports.$$observable = getSymbolObservable(root_1.root);
 	//# sourceMappingURL=observable.js.map
+
+/***/ },
+/* 39 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = undefined;
+
+	var _classCallCheck2 = __webpack_require__(2);
+
+	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+	var _createClass2 = __webpack_require__(3);
+
+	var _createClass3 = _interopRequireDefault(_createClass2);
+
+	var _child_process = __webpack_require__(40);
+
+	var _child_process2 = _interopRequireDefault(_child_process);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var ChildProcess = function () {
+	    function ChildProcess() {
+	        (0, _classCallCheck3.default)(this, ChildProcess);
+	    }
+
+	    (0, _createClass3.default)(ChildProcess, [{
+	        key: 'exec',
+	        value: function exec(filepath, arg, cb) {
+	            try {
+	                var work_process = _child_process2.default.exec('node ../' + arguments[0] + ' ' + arguments[1], function (err, stdout, stderr) {
+	                    if (err) {
+	                        throw err;
+	                    }
+	                    cb(err, stdout, stderr);
+	                });
+	            } catch (e) {
+	                console.log(e);
+	            }
+	        }
+	    }]);
+	    return ChildProcess;
+	}();
+
+	exports.default = ChildProcess;
+
+/***/ },
+/* 40 */
+/***/ function(module, exports) {
+
+	module.exports = require("child_process");
 
 /***/ }
 /******/ ]);
