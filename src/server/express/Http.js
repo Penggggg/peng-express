@@ -1,5 +1,5 @@
 import http from 'http';
-import { Observable } from 'rxjs/Observable';
+import { matchReqRoute } from './Utils';
 
 export default class Http {
 
@@ -22,14 +22,28 @@ export default class Http {
 
     addRoute ( route, cb, method ) {
         try {
+            let _params = [ ];
+            let __hasParams__ = /\:/.test( route );
             if ( typeof arguments[0] !== 'string' || typeof arguments[1] !== 'function') {
                 console.log(`TypeError: Http _addRoute`);
                 throw "TypeError: Http _addRoute";
-            }else {
+             }else {
+                if ( __hasParams__ ) {
+                    let _f = route.split(':');
+                    route = _f[0].slice( 0, route.length - 1 );
+                    for ( let i = 1; i < _f.length; i++ ) {
+                        if ( i === _f.length - 1 ) {
+                              _params.push( _f[i] );
+                        } else {
+                            _params.push( _f[i].substring(0, _f[i].length-1 ));
+                        }
+                    }
+                }
                 this.routes.push({
-                    route: route,
+                    route: __hasParams__ ? route.split(':')[0].substring( 0, route.length - 1 ) : route,
                     cb: cb,
-                    method: method
+                    method: method,
+                    params:  _params
                 });
             }
         }catch ( e ) {
@@ -42,11 +56,11 @@ export default class Http {
             http.createServer((req, res) => {
                 // 1. run the midwares
                 this.midwares.map((midware) => {
-                    midware( req, res );
+                    midware( req, res, this.routes );
                 });
                 // 2. switch routes and method
                 this.routes.map((route) => {
-                    if( route.route === req.url && route.method === req.method ) {
+                    if ( matchReqRoute( route, req.path )) {
                         route.cb( req, res ); return ;
                     }
                 });
@@ -54,7 +68,7 @@ export default class Http {
             console.log(`server is listening in ${domain}: ${port}`);
 
         } catch (e) {
-            console.log(`create server error`);console.log(e);
+            console.log(`create server error`);
         }
     }
 
