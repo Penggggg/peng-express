@@ -50,7 +50,7 @@ export const BodyParser = ( ) => ( req, res, routes )=> {
           }
 
      });
-     console.log(req.params);
+     console.log(req.path);
 
 
 };

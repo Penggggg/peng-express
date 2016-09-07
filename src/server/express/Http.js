@@ -1,4 +1,7 @@
 import http from 'http';
+import cluster from 'cluster';
+import os from 'os';
+import child_process from 'child_process';
 import { matchReqRoute } from './Utils';
 
 export default class Http {
@@ -51,25 +54,64 @@ export default class Http {
         }
     }
 
-    listen ( domain, port ) {
-        try{
-            http.createServer((req, res) => {
-                // 1. run the midwares
-                this.midwares.map((midware) => {
-                    midware( req, res, this.routes );
-                });
-                // 2. switch routes and method
-                this.routes.map((route) => {
-                    if ( matchReqRoute( route, req.path )) {
-                        route.cb( req, res ); return ;
-                    }
-                });
-            }).listen( Number(port), domain );
-            console.log(`server is listening in ${domain}: ${port}`);
+    listen ( domain, port, opt ) {
+        switch ( opt.type ) {
+            case 'http':
+                this._makeHttpServer.apply( this, arguments );
+                break;
+            default:
+                break;
+        }
+    }
 
+    _makeHttpServer ( domain, port, opt ) {
+        try{
+            // if ( cluster.isMaster ) {
+            //     for ( let i = 0; i < os.cpus().length; i++ ) {
+            //         cluster.fork();
+            //     }
+            //     cluster.on( 'exit', ( worker, code, sign ) => {
+            //           console.log(`worker ${worker.process.pid} is die`);
+            //           cluster.fork();
+            //     });
+            // } else {
+            //     http.createServer((req, res) => {
+            //         // 1. run the midwares
+            //         this._runMidwares( this.midwares, req, res )();
+            //         // 2. switch routes and method
+            //         this._matchRoute( this.routes, req, res )();
+            //     }).listen( Number(port), domain);
+            //     console.log(`server is listening in ${domain}: ${port}`);
+            // }
+            http.createServer((req, res) => {
+                   // 1. run the midwares
+                   this._runMidwares( this.midwares, req, res )();
+                   // 2. switch routes and method
+                   this._matchRoute( this.routes, req, res )();
+               }).listen( Number(port), domain);
+               console.log(`server is listening in ${domain}: ${port}`);
         } catch (e) {
             console.log(`create server error`);
         }
+    }
+
+
+    _runMidwares ( midwares, req, res ) {
+        return ( ) => {
+            midwares.map((midware) => {
+                midware( req, res, this.routes );
+            });
+        };
+    }
+
+    _matchRoute ( routes, req, res ) {
+        return ( ) => {
+            routes.map((route) => {
+                if ( matchReqRoute( route, req.path )) {
+                    route.cb( req, res ); return ;
+                }
+            });
+        };
     }
 
 }

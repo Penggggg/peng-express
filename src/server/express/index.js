@@ -1,5 +1,4 @@
 import Http from './Http';
-import ChildProcess from './Child_process';
 
 let express ;
 export default express = ( ) => {
@@ -9,15 +8,18 @@ export default express = ( ) => {
 class App {
     constructor ( ) {
         this._http = new Http();
-        this.child_process = new ChildProcess();
     }
 
     _init ( ) {
 
     }
 
-    listen ( domain, port ) {
-        this._http.listen.apply( this._http, arguments );
+    listen ( domain, port, opt ) {
+        process.nextTick(() => {
+            this._http.listen.apply( this._http, arguments );
+        });
+        
+
     }
 
     get ( pathname, callback ) {
@@ -32,8 +34,5 @@ class App {
         this._http.addMidware( midware );
     }
 
-    node ( filename, args, cb ) {
-        this.child_process.exec.apply( this.child_process, arguments );
-    }
 
 }

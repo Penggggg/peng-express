@@ -50,12 +50,15 @@
 
 	var _express2 = _interopRequireDefault(_express);
 
-	var _Midwares = __webpack_require__(41);
+	var _Midwares = __webpack_require__(26);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var app = (0, _express2.default)();
-	app.listen('127.0.0.1', '80');
+	app.listen('127.0.0.1', '80', {
+	    mulProcess: 2,
+	    type: 'http'
+	});
 
 	app.use((0, _Midwares.BodyParser)());
 
@@ -64,7 +67,6 @@
 	});
 
 	app.get('/cat', function (req, res) {
-	    console.log('cat');
 	    res.end('cat');
 	});
 
@@ -82,10 +84,6 @@
 
 	app.get('/beau/girl/:name', function (req, res) {
 	    res.end('beau');
-	});
-
-	app.node('../static/sayhello.js', 1, function (err, stdout, stderr) {
-	    console.log(stdout);
 	});
 
 /***/ },
@@ -110,10 +108,6 @@
 
 	var _Http2 = _interopRequireDefault(_Http);
 
-	var _Child_process = __webpack_require__(39);
-
-	var _Child_process2 = _interopRequireDefault(_Child_process);
-
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var express = void 0;
@@ -127,7 +121,6 @@
 	        (0, _classCallCheck3.default)(this, App);
 
 	        this._http = new _Http2.default();
-	        this.child_process = new _Child_process2.default();
 	    }
 
 	    (0, _createClass3.default)(App, [{
@@ -135,8 +128,13 @@
 	        value: function _init() {}
 	    }, {
 	        key: 'listen',
-	        value: function listen(domain, port) {
-	            this._http.listen.apply(this._http, arguments);
+	        value: function listen(domain, port, opt) {
+	            var _this = this,
+	                _arguments = arguments;
+
+	            process.nextTick(function () {
+	                _this._http.listen.apply(_this._http, _arguments);
+	            });
 	        }
 	    }, {
 	        key: 'get',
@@ -150,11 +148,6 @@
 	        key: 'use',
 	        value: function use(midware) {
 	            this._http.addMidware(midware);
-	        }
-	    }, {
-	        key: 'node',
-	        value: function node(filename, args, cb) {
-	            this.child_process.exec.apply(this.child_process, arguments);
 	        }
 	    }]);
 	    return App;
@@ -492,7 +485,19 @@
 
 	var _http2 = _interopRequireDefault(_http);
 
-	var _Utils = __webpack_require__(42);
+	var _cluster = __webpack_require__(27);
+
+	var _cluster2 = _interopRequireDefault(_cluster);
+
+	var _os = __webpack_require__(28);
+
+	var _os2 = _interopRequireDefault(_os);
+
+	var _child_process = __webpack_require__(24);
+
+	var _child_process2 = _interopRequireDefault(_child_process);
+
+	var _Utils = __webpack_require__(25);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -551,26 +556,70 @@
 	        }
 	    }, {
 	        key: 'listen',
-	        value: function listen(domain, port) {
+	        value: function listen(domain, port, opt) {
+	            switch (opt.type) {
+	                case 'http':
+	                    this._makeHttpServer.apply(this, arguments);
+	                    break;
+	                default:
+	                    break;
+	            }
+	        }
+	    }, {
+	        key: '_makeHttpServer',
+	        value: function _makeHttpServer(domain, port, opt) {
 	            var _this = this;
 
 	            try {
+	                // if ( cluster.isMaster ) {
+	                //     for ( let i = 0; i < os.cpus().length; i++ ) {
+	                //         cluster.fork();
+	                //     }
+	                //     cluster.on( 'exit', ( worker, code, sign ) => {
+	                //           console.log(`worker ${worker.process.pid} is die`);
+	                //           cluster.fork();
+	                //     });
+	                // } else {
+	                //     http.createServer((req, res) => {
+	                //         // 1. run the midwares
+	                //         this._runMidwares( this.midwares, req, res )();
+	                //         // 2. switch routes and method
+	                //         this._matchRoute( this.routes, req, res )();
+	                //     }).listen( Number(port), domain);
+	                //     console.log(`server is listening in ${domain}: ${port}`);
+	                // }
 	                _http2.default.createServer(function (req, res) {
 	                    // 1. run the midwares
-	                    _this.midwares.map(function (midware) {
-	                        midware(req, res, _this.routes);
-	                    });
+	                    _this._runMidwares(_this.midwares, req, res)();
 	                    // 2. switch routes and method
-	                    _this.routes.map(function (route) {
-	                        if ((0, _Utils.matchReqRoute)(route, req.path)) {
-	                            route.cb(req, res);return;
-	                        }
-	                    });
+	                    _this._matchRoute(_this.routes, req, res)();
 	                }).listen(Number(port), domain);
 	                console.log('server is listening in ' + domain + ': ' + port);
 	            } catch (e) {
 	                console.log('create server error');
 	            }
+	        }
+	    }, {
+	        key: '_runMidwares',
+	        value: function _runMidwares(midwares, req, res) {
+	            var _this2 = this;
+
+	            return function () {
+	                midwares.map(function (midware) {
+	                    midware(req, res, _this2.routes);
+	                });
+	            };
+	        }
+	    }, {
+	        key: '_matchRoute',
+	        value: function _matchRoute(routes, req, res) {
+	            return function () {
+	                routes.map(function (route) {
+	                    if ((0, _Utils.matchReqRoute)(route, req.path)) {
+	                        route.cb(req, res);return;
+	                    }
+	                });
+	            };
 	        }
 	    }]);
 	    return Http;
@@ -585,78 +634,44 @@
 	module.exports = require("http");
 
 /***/ },
-/* 24 */,
-/* 25 */,
-/* 26 */,
-/* 27 */,
-/* 28 */,
-/* 29 */,
-/* 30 */,
-/* 31 */,
-/* 32 */,
-/* 33 */,
-/* 34 */,
-/* 35 */,
-/* 36 */,
-/* 37 */,
-/* 38 */,
-/* 39 */
-/***/ function(module, exports, __webpack_require__) {
+/* 24 */
+/***/ function(module, exports) {
+
+	module.exports = require("child_process");
+
+/***/ },
+/* 25 */
+/***/ function(module, exports) {
 
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.default = undefined;
+	var matchReqRoute = exports.matchReqRoute = function matchReqRoute(route, path) {
 
-	var _classCallCheck2 = __webpack_require__(2);
+	    var _deep = path.match(/\//g).length;
+	    var _paralength = route.params.length;
 
-	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-
-	var _createClass2 = __webpack_require__(3);
-
-	var _createClass3 = _interopRequireDefault(_createClass2);
-
-	var _child_process = __webpack_require__(40);
-
-	var _child_process2 = _interopRequireDefault(_child_process);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var ChildProcess = function () {
-	    function ChildProcess() {
-	        (0, _classCallCheck3.default)(this, ChildProcess);
-	    }
-
-	    (0, _createClass3.default)(ChildProcess, [{
-	        key: 'exec',
-	        value: function exec(filepath, arg, cb) {
-	            try {
-	                var work_process = _child_process2.default.exec('node ../' + arguments[0] + ' ' + arguments[1], function (err, stdout, stderr) {
-	                    if (err) {
-	                        throw err;
-	                    }
-	                    cb(err, stdout, stderr);
-	                });
-	            } catch (e) {
-	                console.log(e);
+	    if (_deep === 1) {
+	        return path === route.route ? true : false;
+	    } else if (_deep >= 2) {
+	        if (_paralength === 0) {
+	            return path === route.route ? true : false;
+	        } else {
+	            // 1. 存在 2. 强等 3. 参数个数符合
+	            if (path.indexOf(route.route) === 0) {
+	                var _a = path.slice(route.route.length);
+	                if (_a.indexOf('/') === 0 && _a.split('/').length - 1 === _paralength) {
+	                    return true;
+	                }
 	            }
 	        }
-	    }]);
-	    return ChildProcess;
-	}();
-
-	exports.default = ChildProcess;
+	    }
+	};
 
 /***/ },
-/* 40 */
-/***/ function(module, exports) {
-
-	module.exports = require("child_process");
-
-/***/ },
-/* 41 */
+/* 26 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -718,40 +733,21 @@
 	                }
 	            }
 	        });
-	        console.log(req.params);
+	        console.log(req.path);
 	    };
 	};
 
 /***/ },
-/* 42 */
+/* 27 */
 /***/ function(module, exports) {
 
-	'use strict';
+	module.exports = require("cluster");
 
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	var matchReqRoute = exports.matchReqRoute = function matchReqRoute(route, path) {
+/***/ },
+/* 28 */
+/***/ function(module, exports) {
 
-	    var _deep = path.match(/\//g).length;
-	    var _paralength = route.params.length;
-
-	    if (_deep === 1) {
-	        return path === route.route ? true : false;
-	    } else if (_deep >= 2) {
-	        if (_paralength === 0) {
-	            return path === route.route ? true : false;
-	        } else {
-	            // 1. 存在 2. 强等 3. 参数个数符合
-	            if (path.indexOf(route.route) === 0) {
-	                var _a = path.slice(route.route.length);
-	                if (_a.indexOf('/') === 0 && _a.split('/').length - 1 === _paralength) {
-	                    return true;
-	                }
-	            }
-	        }
-	    }
-	};
+	module.exports = require("os");
 
 /***/ }
 /******/ ]);
