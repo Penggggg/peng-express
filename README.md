@@ -54,3 +54,8 @@
 
   when: 127.0.0.1/user/hzp
   result: req.path = '/user/.hzp'; req.query = { }; req.params = { name: 'hzp' }
+
+
+  * $ curl -b "key1=hzp;key2=man"
+
+    req.cookies.key1 = "hzp"; req.cookies.key2 = "man"

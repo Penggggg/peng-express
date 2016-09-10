@@ -66,30 +66,15 @@ export default class Http {
 
     _makeHttpServer ( domain, port, opt ) {
         try{
-            // if ( cluster.isMaster ) {
-            //     for ( let i = 0; i < os.cpus().length; i++ ) {
-            //         cluster.fork();
-            //     }
-            //     cluster.on( 'exit', ( worker, code, sign ) => {
-            //           console.log(`worker ${worker.process.pid} is die`);
-            //           cluster.fork();
-            //     });
-            // } else {
-            //     http.createServer((req, res) => {
-            //         // 1. run the midwares
-            //         this._runMidwares( this.midwares, req, res )();
-            //         // 2. switch routes and method
-            //         this._matchRoute( this.routes, req, res )();
-            //     }).listen( Number(port), domain);
-            //     console.log(`server is listening in ${domain}: ${port}`);
-            // }
+          
             http.createServer((req, res) => {
                    // 1. run the midwares
                    this._runMidwares( this.midwares, req, res )();
                    // 2. switch routes and method
                    this._matchRoute( this.routes, req, res )();
-               }).listen( Number(port), domain);
-               console.log(`server is listening in ${domain}: ${port}`);
+            }).listen( Number(port), domain);
+             console.log(`server is listening in ${domain}: ${port}`);
+
         } catch (e) {
             console.log(`create server error`);
         }

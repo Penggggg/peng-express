@@ -50,7 +50,7 @@
 
 	var _express2 = _interopRequireDefault(_express);
 
-	var _Midwares = __webpack_require__(26);
+	var _Midwares = __webpack_require__(28);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -485,19 +485,19 @@
 
 	var _http2 = _interopRequireDefault(_http);
 
-	var _cluster = __webpack_require__(27);
+	var _cluster = __webpack_require__(24);
 
 	var _cluster2 = _interopRequireDefault(_cluster);
 
-	var _os = __webpack_require__(28);
+	var _os = __webpack_require__(25);
 
 	var _os2 = _interopRequireDefault(_os);
 
-	var _child_process = __webpack_require__(24);
+	var _child_process = __webpack_require__(26);
 
 	var _child_process2 = _interopRequireDefault(_child_process);
 
-	var _Utils = __webpack_require__(25);
+	var _Utils = __webpack_require__(27);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -571,23 +571,7 @@
 	            var _this = this;
 
 	            try {
-	                // if ( cluster.isMaster ) {
-	                //     for ( let i = 0; i < os.cpus().length; i++ ) {
-	                //         cluster.fork();
-	                //     }
-	                //     cluster.on( 'exit', ( worker, code, sign ) => {
-	                //           console.log(`worker ${worker.process.pid} is die`);
-	                //           cluster.fork();
-	                //     });
-	                // } else {
-	                //     http.createServer((req, res) => {
-	                //         // 1. run the midwares
-	                //         this._runMidwares( this.midwares, req, res )();
-	                //         // 2. switch routes and method
-	                //         this._matchRoute( this.routes, req, res )();
-	                //     }).listen( Number(port), domain);
-	                //     console.log(`server is listening in ${domain}: ${port}`);
-	                // }
+
 	                _http2.default.createServer(function (req, res) {
 	                    // 1. run the midwares
 	                    _this._runMidwares(_this.midwares, req, res)();
@@ -637,10 +621,22 @@
 /* 24 */
 /***/ function(module, exports) {
 
-	module.exports = require("child_process");
+	module.exports = require("cluster");
 
 /***/ },
 /* 25 */
+/***/ function(module, exports) {
+
+	module.exports = require("os");
+
+/***/ },
+/* 26 */
+/***/ function(module, exports) {
+
+	module.exports = require("child_process");
+
+/***/ },
+/* 27 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -671,7 +667,7 @@
 	};
 
 /***/ },
-/* 26 */
+/* 28 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -690,14 +686,22 @@
 	    return function (req, res, routes) {
 
 	        var __hasQuery__ = /\?/g.test(req.url);
+	        var __hasCookies__ = /\=/g.test(req.headers.cookie);
 	        var _url = req.url;
 
 	        // init
 	        req.query = {};
 	        req.params = {};
+	        req.cookies = {};
 
 	        // 0. parse the cookies
-
+	        if (__hasCookies__) {
+	            var cookies = req.headers.cookie.split(';');
+	            cookies.map(function (cookie) {
+	                var a = cookie.split('=');
+	                req.cookies[a[0]] = a[1];
+	            });
+	        }
 
 	        // 1. parse the path and query
 	        if (!__hasQuery__) {
@@ -736,18 +740,6 @@
 	        console.log(req.path);
 	    };
 	};
-
-/***/ },
-/* 27 */
-/***/ function(module, exports) {
-
-	module.exports = require("cluster");
-
-/***/ },
-/* 28 */
-/***/ function(module, exports) {
-
-	module.exports = require("os");
 
 /***/ }
 /******/ ]);

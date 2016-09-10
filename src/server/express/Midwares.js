@@ -8,14 +8,22 @@
 export const BodyParser = ( ) => ( req, res, routes )=> {
 
     let __hasQuery__ = /\?/g.test( req.url );
+    let __hasCookies__ = /\=/g.test( req.headers.cookie );
     let _url = req.url;
 
     // init
     req.query = { };
     req.params = { };
+    req.cookies = { };
 
     // 0. parse the cookies
-
+    if ( __hasCookies__ ) {
+        let cookies = req.headers.cookie.split(';');
+        cookies.map((cookie) => {
+            let a = cookie.split('=');
+            req.cookies[ a[0] ] = a[1];
+        });
+    }
 
     // 1. parse the path and query
      if ( ! __hasQuery__ ) {
@@ -51,6 +59,5 @@ export const BodyParser = ( ) => ( req, res, routes )=> {
 
      });
      console.log(req.path);
-
 
 };
